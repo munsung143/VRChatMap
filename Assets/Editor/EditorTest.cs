@@ -9,8 +9,8 @@ public class EditorTest : EditorWindow
     private GameObject cubePrefab;       // 프리팹 또는 큐브 오브젝트
     private Texture2D img;               // 텍스처 이미지
     private float length = 1.0f;         // 큐브 한 변의 길이
-    private int horizontalOffset = 1;    // 가로 오프셋 (픽셀 수)
-    private int verticalOffset = 1;      // 세로 오프셋 (픽셀 수)
+    private int horizontalOffset = 20;    // 가로 오프셋 (픽셀 수)
+    private int verticalOffset = 20;      // 세로 오프셋 (픽셀 수)
     private float colorThreshold = 0.1f; // 검은색 판정 임계값
 
     [MenuItem("Tools/Maze Generator")]
@@ -52,15 +52,10 @@ public class EditorTest : EditorWindow
             Debug.LogError($"[MazeGenerator] 이미지 '{img.name}'의 Texture Import Settings에서 'Read/Write Enabled'를 체크해주세요.");
             return;
         }
-
-        // 1. 기존 자식 오브젝트 모두 제거 (Undo 지원)
         ClearChildren(maze);
 
         int imgWidth = img.width;
         int imgHeight = img.height;
-
-        // 실행 취소(Undo) 등록
-        Undo.RegisterCompleteObjectUndo(maze.gameObject, "Generate Maze");
 
         // 2. 이미지 픽셀 탐색 및 큐브 생성
         for (int y = 0; y < imgHeight; y += verticalOffset)
@@ -70,10 +65,11 @@ public class EditorTest : EditorWindow
                 Color c = img.GetPixel(x, y);
 
                 // RGB 평균값이 임계값 이하이면 검은색으로 판단
-                if (c.r <= colorThreshold && c.g <= colorThreshold && c.b <= colorThreshold && c.a > 0.5f)
+                if (c.r <= colorThreshold && c.g <= colorThreshold && c.b <= colorThreshold)
                 {
                     // 좌측 맨위 시작점에 맞추기 위해 Y축 좌표는 음수로 배치
-                    Vector3 position = new Vector3(-x/verticalOffset * length, 0f, y/horizontalOffset * length);
+                    Vector3 position = new Vector3(x/verticalOffset * length, 0f, y/horizontalOffset * length);
+                    Debug.Log($"{x/verticalOffset * length} {y/horizontalOffset * length} pixel: {x} {y-2047}");
 
                     // 에디터 환경에서 Undo 지원하며 인스턴스화
                     GameObject spawnedCube = (GameObject)PrefabUtility.InstantiatePrefab(cubePrefab, maze);
