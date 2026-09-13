@@ -13,10 +13,11 @@ public class MazeGenerate : EditorWindow
 {
     static Texture2D texture;
 
-    static int textureLength = 256;
-    static int xLength = 10;
-    static int yLength = 10;
+    static int textureLength = 4096;
+    static int xLength = 2000;
+    static int yLength = 2000;
     static MazeNode[,] nodes;
+    static Stack<MazeNode> stk;
     static int count;
 
     [MenuItem("Tools/Create and Save Texture")]
@@ -25,6 +26,7 @@ public class MazeGenerate : EditorWindow
         count = 0;
         texture = new Texture2D(textureLength, textureLength, TextureFormat.RGBA32, false);
         nodes = new MazeNode[yLength, xLength];
+        stk = new Stack<MazeNode>();
 
         // 미로 영역 검은색 초기화
         for (int y = 0; y < xLength * 2 + 1; y++)
@@ -36,7 +38,7 @@ public class MazeGenerate : EditorWindow
             for (int x = 0; x < yLength; x++)
             {
                 nodes[y, x] = new MazeNode(x, y);
-                texture.SetPixel(nodes[y,x].x *2 + 1, nodes[y,x].y *2 + 1, Color.green);
+                texture.SetPixel(nodes[y, x].x * 2 + 1, nodes[y, x].y * 2 + 1, Color.green);
             }
 
         // 첫 노드 위치 랜덤으로 정하고 트랙 시작
@@ -44,7 +46,57 @@ public class MazeGenerate : EditorWindow
         int firstY = Random.Range(0, yLength);
         MazeNode firstNode = nodes[firstY, firstX];
         firstNode.cameFrom = Direction.None;
-        Track(firstNode);
+
+        stk.Push(firstNode);
+        while (stk.Count != 0)
+        {
+            MazeNode node = stk.Peek();
+            int pixelPosX = node.x * 2 + 1;
+            int pixelPosY = node.y * 2 + 1;
+            node.isVisited = true;
+            List<Direction> directions = node.directions;
+            bool find = false;
+            while (directions.Count != 0)
+            {
+                int num = Random.Range(0, directions.Count);
+                Direction dir = directions[num];
+                directions.RemoveAt(num);
+
+                MazeNode next = null;
+                if (dir == Direction.East && node.x + 1 < xLength) next = nodes[node.y, node.x + 1];
+                else if (dir == Direction.West && node.x - 1 > -1) next = nodes[node.y, node.x - 1];
+                else if (dir == Direction.South && node.y - 1 > -1) next = nodes[node.y - 1, node.x];
+                else if (dir == Direction.North && node.y + 1 < yLength) next = nodes[node.y + 1, node.x];
+
+                if (next != null && !next.isVisited)
+                {
+                    find = true;
+                    next.cameFrom = dir;
+                    stk.Push(next);
+                }
+            }
+            if (find)
+            {
+                continue;
+            }
+            stk.Pop();
+            texture.SetPixel(pixelPosX, pixelPosY, Color.white);
+            switch (node.cameFrom)
+            {
+                case Direction.East:
+                    texture.SetPixel(pixelPosX - 1, pixelPosY, Color.white);
+                    break;
+                case Direction.West:
+                    texture.SetPixel(pixelPosX + 1, pixelPosY, Color.white);
+                    break;
+                case Direction.South:
+                    texture.SetPixel(pixelPosX, pixelPosY + 1, Color.white);
+                    break;
+                case Direction.North:
+                    texture.SetPixel(pixelPosX, pixelPosY - 1, Color.white);
+                    break;
+            }
+        }
 
         Save();
     }
@@ -105,7 +157,7 @@ public class MazeGenerate : EditorWindow
                 Track(next);
             }
         }
-       if (count >700) return;
+        if (count > 700) return;
         Debug.Log($"고립됨 : {node.x} {node.y}");
         texture.SetPixel(pixelPosX, pixelPosY, Color.white);
         switch (node.cameFrom)
@@ -143,6 +195,7 @@ public class MazeNode
     public int y;
     public bool isVisited;
     public Direction cameFrom;
+    public List<Direction> directions = new List<Direction>() { Direction.East, Direction.West, Direction.South, Direction.North };
     public MazeNode(int x, int y)
     {
         this.x = x;
