@@ -170,7 +170,7 @@ public class MazeGenerator : EditorWindow
                 // RGB 평균값이 임계값 이하이면 검은색으로 판단
                 if (c.r <= 0.1f && c.g <= 0.1f && c.b <= 0.1f)
                 {
-                    Vector3 position = new Vector3(x / cubeLength, 0f, y / cubeLength);
+                    Vector3 position = new Vector3(x * cubeLength, 0f, y * cubeLength);
                     //Debug.Log($"{x / verticalOffset * length} {y / horizontalOffset * length} pixel: {x} {y - 2047}");
 
                     // 에디터 환경에서 Undo 지원하며 인스턴스화
